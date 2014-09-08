@@ -8,7 +8,7 @@ class Dungeon
       Room.new(:tinyroom, "Tiny Room", "a closet-sized room, with a crude bed and desk, apparently inhabited", {east: :tunnel, north: :longhall}),
       Room.new(:longhall, "Long Hall", "a long, dark hallway, deserted but pristine", {south: :tinyroom, east: :deadend, west: :torture}),
       Room.new(:torture, "Torture Chamber", "a large, stone-walled cell full of terrifying objects that appear to be instruments of torture--but on a blood-stained table, there's a rusted key", {east: :longhall}, ['iron key', 'goblet']),
-      Room.new(:deadend, "Dead End", "a small, stone-walled cell with no exits. There's an ancient skeleton seated in a corner")
+      Room.new(:deadend, "Dead End", "a small, stone-walled cell with no exits. There's an ancient skeleton seated in a corner. Something terrible has clearly happened here")
   ]
 
   @player = Player.new(player_name)
@@ -33,12 +33,14 @@ class Dungeon
 
   def find_room_in_direction(direction)
     current_location = find_room_in_dungeon(@player.location)
+
     if current_location.connections.has_key? direction
       return current_location.connections[direction]
     else
       puts "There's no way through to the #{direction}. Go somewhere else."
       return current_location.reference
     end
+
   end
 
   def go(direction)
@@ -60,6 +62,7 @@ class Dungeon
         return direction
       end
     end
+
     return nil
   end
 
@@ -69,7 +72,7 @@ class Dungeon
     current_location = find_room_in_dungeon(@player.location)
 
     while not choice
-      puts "\nYou run around frantically and accomplish nothing. Try picking a real direction. You can go #{current_location.list_directions}."
+      puts "\nYou run around the #{current_location.name} frantically; this accomplishes nothing. Try picking a real direction. You can go #{current_location.list_directions}."
       choice = gets.chomp
       choice = check_direction(choice)
     end
@@ -81,6 +84,7 @@ class Dungeon
     end
   end
 
+  # not yet implemented
   def pick_up_object(room, object)
     @player.inventory << room.contents.delete(object)
   end
@@ -123,12 +127,14 @@ class Dungeon
       directions = []
       # there's a way to do this by something like list comprehension
       if @connections.length > 0
+
         connections.each do |direction|
           directions << direction[0].to_s
         end
+
         return list_to_text(directions, " or ")
       else
-        abort "A rockfall behind you traps you in the #{@name} and you slowly asphyxiate to death."
+        abort "But before you can contemplate it, a rockfall behind you traps you in the #{@name} and you slowly asphyxiate to death."
       end
       return nil
     end
@@ -136,6 +142,7 @@ class Dungeon
     # this is very unsophisticated
     def add_article(noun)
       vowels = "AEIOUaeiou"
+
       if noun[-1].downcase == 's'
         return noun
       else
@@ -148,13 +155,15 @@ class Dungeon
     end
 
     def list_to_text(list, separator=" and ")
-      text = ""
       if list.length > 2
         i = list.length - 1
-        (list.length - 1).times do
+        text = ""
+
+        i.times do
           text += list[i] + ", "
           i -= 1
         end
+
         text += (separator.lstrip + list[0])
         return text
       elsif list.length == 2
@@ -174,6 +183,7 @@ class Dungeon
       @inventory = []
     end
 
+    # not implemented yet
     def add_to_inventory(object)
       @inventory << object
     end
@@ -184,6 +194,7 @@ class Dungeon
 
   end
 
+  # not implemented yet
   class Passage
     attr_accessor :reference, :type, :status, :to, :from
   end
