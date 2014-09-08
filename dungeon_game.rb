@@ -7,8 +7,8 @@ class Dungeon
       Room.new(:tunnel, "Narrow Tunnel", "a claustrophobic tunnel, choked with rocks and debris", {east: :entrance, west: :tinyroom}),
       Room.new(:tinyroom, "Tiny Room", "a closet-sized room, with a crude bed and desk, apparently inhabited", {east: :tunnel, north: :longhall}),
       Room.new(:longhall, "Long Hall", "a long, dark hallway, deserted but pristine", {south: :tinyroom, east: :deadend, west: :torture}),
-      Room.new(:torture, "Torture Chamber", "a large, stone-walled cell full of terrifying objects that appear to be instruments of torture--but on a blood-stained table, there's a rusted key", {east: :longhall}),
-      Room.new(:deadend, "Dead End", "a small, stone-walled cell with no exits, an ancient skeleton seated in a corner")
+      Room.new(:torture, "Torture Chamber", "a large, stone-walled cell full of terrifying objects that appear to be instruments of torture--but on a blood-stained table, there's a rusted key", {east: :longhall}, ['iron key', 'goblet']),
+      Room.new(:deadend, "Dead End", "a small, stone-walled cell with no exits. There's an ancient skeleton seated in a corner")
   ]
 
   @player = Player.new(player_name)
@@ -38,7 +38,6 @@ class Dungeon
     else
       puts "There's no way through to the #{direction}. Go somewhere else."
       return current_location.reference
-
     end
   end
 
@@ -82,6 +81,14 @@ class Dungeon
     end
   end
 
+  def pick_up_object(room, object)
+    @player.inventory << room.contents.delete(object)
+  end
+
+  def drop_object(room, object)
+    room.contents << @player.inventory.object.delete
+  end
+
 
   class Room
     attr_accessor :reference, :name, :description, :connections, :contents
@@ -91,34 +98,56 @@ class Dungeon
       @name = name
       @description = description
       @connections = connections
-      @contents = contents
+      @contents = []
+      contents.each do |item|
+        @contents << add_article(item)
+      end
     end
 
     def full_description
-#      directions = list_directions
       print "\nYou are in the #{@name}. It's #{@description}. "
-      print "You can go #{list_directions}. "
-      if @connections.length > 0
-        print "Which direction do you go? "
+      if @contents.length > 0
+        if @contents.length == 1
+          verb = "is"
+        else
+          verb = "are"
+        end
+        print "In the room #{verb} #{list_to_text(@contents)}. "
+        print "You can go #{list_directions}. What do you do?"
+      else
+        print "You can go #{list_directions}. Which direction do you go?"
       end
-#      return description
     end
 
     def list_directions
       directions = []
+      # there's a way to do this by something like list comprehension
       if @connections.length > 0
         connections.each do |direction|
           directions << direction[0].to_s
-          connections.delete(direction)
         end
-        return list_to_text(directions)
+        return list_to_text(directions, " or ")
       else
         abort "A rockfall behind you traps you in the #{@name} and you slowly asphyxiate to death."
       end
       return nil
     end
 
-    def list_to_text(list)
+    # this is very unsophisticated
+    def add_article(noun)
+      vowels = "AEIOUaeiou"
+      if noun[-1].downcase == 's'
+        return noun
+      else
+        if vowels.include? noun[0]
+          return "an " + noun
+        else
+          return "a " + noun
+        end
+      end
+    end
+
+    def list_to_text(list, separator=" and ")
       text = ""
       if list.length > 2
         i = list.length - 1
@@ -126,10 +155,10 @@ class Dungeon
           text += list[i] + ", "
           i -= 1
         end
-        text += ("or " + list[0])
+        text += (separator.lstrip + list[0])
         return text
       elsif list.length == 2
-        return list.join(" or ")
+        return list.join(separator)
       else
         return list[0]
       end
@@ -162,7 +191,7 @@ end
 
 def main
   d = Dungeon.new
-  d.start(:entrance)
+  d.start(:torture)
 
   while true
     choice = d.get_direction
